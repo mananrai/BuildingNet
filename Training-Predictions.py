@@ -1,16 +1,12 @@
-# Mask RCNN
+# Mask R-CNN
 #
-# This program contains the baseline code for training a Mask RCNN and making predictions.
-#
-# [Mask RCNN](https://arxiv.org/abs/1703.06870) model for the [crowdAI Mapping Challenge](https://www.crowdai.org/challenges/mapping-challenge).
-#
-# This code is adapted from the [Mask RCNN]() tensorflow implementation available here : [https://github.com/matterport/Mask_RCNN](https://github.com/matterport/Mask_RCNN).
+# This program contains the baseline code for training a Mask R-CNN and making predictions.
 #
 # Sources:
 #   - This code is heavily inspired by the implementation by Sharada Mohanty for the CrowdAI Mapping Challenge
 #       (https://www.crowdai.org/challenges/mapping-challenge) with minor changes
 #   - Adapted from the tensorflow implementation available at https://github.com/matterport/Mask_RCNN
-#   - Mask RCNN (https://arxiv.org/abs/1703.06870)
+#   - Mask R-CNN (https://arxiv.org/abs/1703.06870)
 #
 
 import os
@@ -19,21 +15,9 @@ import time
 import numpy as np
 import skimage.io
 
-# Download and install the Python COCO tools from https://github.com/waleedka/coco
-# That's a fork from the original https://github.com/pdollar/coco with a bug
-# fix for Python 3.
-# I submitted a pull request https://github.com/cocodataset/cocoapi/pull/50
-# If the PR is merged then use the original repo.
-# Note: Edit PythonAPI/Makefile and replace "python" with "python3".
-#
-# A quick one liner to install the library
-# !pip install git+https://github.com/waleedka/coco.git#subdirectory=PythonAPI
-
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from pycocotools import mask as maskUtils
-
-# import coco #a slightly modified version
 
 from mrcnn.evaluate import build_coco_results, evaluate_coco
 from mrcnn.dataset import MappingChallengeDataset
@@ -48,7 +32,7 @@ import random
 
 ROOT_DIR = os.getcwd()
 
-# Import Mask RCNN
+# Import Mask R-CNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn.config import Config
 from mrcnn import model as modellib, utils
@@ -66,8 +50,7 @@ class BuildingsConfig(Config):
     # Give the configuration a recognizable name
     NAME = "Buildings"
 
-    # We use a GPU with 12GB memory, which can fit two images.
-    # Adjust down if you use a smaller GPU.
+    # Adjust according to the GPU
     IMAGES_PER_GPU = 5
 
     # Uncomment to train on 8 GPUs (default is 1)
@@ -76,25 +59,28 @@ class BuildingsConfig(Config):
     # Number of classes (including background)
     NUM_CLASSES = 1 + 1  # 1 Background + 1 Building
 
-    STEPS_PER_EPOCH=100
-    VALIDATION_STEPS=20
-
-    IMAGE_MAX_DIM=320
-    IMAGE_MIN_DIM=320
-
-class InferenceConfig(Config):
-    # Set batch size to 1 since we'll be running inference on
-    # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
-    GPU_COUNT = 1
-
-    IMAGES_PER_GPU = 5
-
-    NUM_CLASSES = 1 + 1  # 1 Background + 1 Building
+    STEPS_PER_EPOCH = 1000
+    VALIDATION_STEPS = 20
 
     IMAGE_MAX_DIM = 320
     IMAGE_MIN_DIM = 320
 
-    NAME = "crowdai-mapping-challenge"
+class InferenceConfig(Config):
+    # Give the configuration a recognizable name
+    NAME = "Buildings"
+    
+    # Set batch size to 1 since we'll be running inference on
+    # one image at a time. Batch size = GPU_COUNT * IMAGES_PER_GPU
+    GPU_COUNT = 1
+
+    # Adjust according to the GPU
+    IMAGES_PER_GPU = 5
+
+    # Number of classes (including background)
+    NUM_CLASSES = 1 + 1  # 1 Background + 1 Building
+
+    IMAGE_MAX_DIM = 320
+    IMAGE_MIN_DIM = 320
 
 def train():
     config = BuildingsConfig()
@@ -147,7 +133,6 @@ def test(examples="one"):
     inference_model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
 
     model_path = PRETRAINED_MODEL_PATH
-
     # or if you want to use the latest trained model, you can use :
     # model_path = model.find_last()[1]
 
@@ -156,13 +141,11 @@ def test(examples="one"):
     class_names = ['BG', 'building']  # In our case, we have 1 class for the background, and 1 class for building
 
     file_names = next(os.walk(IMAGE_DIR))[2]
-    random_image = skimage.io.imread(os.path.join(IMAGE_DIR, random.choice(file_names)))
-
-    predictions = inference_model.detect([random_image] * config.BATCH_SIZE,
-                                         verbose=1)  # We are replicating the same image to fill up the batch_size
-
+    print(file_names)
     # Run on single example
     if (examples == "one"):
+        random_image = skimage.io.imread(os.path.join(IMAGE_DIR, random.choice(file_names)))
+        predictions = inference_model.detect([random_image] * config.BATCH_SIZE, verbose=1)  # We are replicating the same image to fill up the batch_size
         p = predictions[0]
         visualize.display_instances(random_image, p['rois'], p['masks'], p['class_ids'], class_names, p['scores'])
     # Run on entire test set
@@ -204,7 +187,7 @@ def test(examples="one"):
                         _result["bbox"] = [bbox[1], bbox[0], bbox[3] - bbox[1], bbox[2] - bbox[0]]
                         _final_object.append(_result)
 
-def CompilePredictions():
+def compilePredictions():
     fp = open("predictions.json", "w")
     import json
     print("Writing JSON...")
@@ -212,7 +195,8 @@ def CompilePredictions():
     fp.close()
 
 if __name__ == '__main__':
-    # Uncomment in order to train
+    # Uncomment in order to train, and then used the previous model's weights
+    # for testing by uncommenting line 151
     # train()
 
     # Trains using pre-trained weights
