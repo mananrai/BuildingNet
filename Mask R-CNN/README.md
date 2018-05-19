@@ -8,7 +8,8 @@ The Mask R-CNN is a framework for object instance segmentation. It initially use
 
 ### Sample Results
 
-
+<img src="assets/pic1.png" alt="Picture1" width="400px" height="400px"></img>
+<img src="assets/pic2.png" alt="Picture2" width="400px" height="400px"></img>
 
 ### Using the Model
 
