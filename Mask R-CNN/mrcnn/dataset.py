@@ -7,7 +7,7 @@ from pycocotools import mask as maskUtils
 
 import os
 
-class MappingChallengeDataset(utils.Dataset):
+class BuildingsDataset(utils.Dataset):
     def load_dataset(self, dataset_dir, load_small=False, return_coco=True):
         """ Loads dataset released for the crowdAI Mapping Challenge(https://www.crowdai.org/challenges/mapping-challenge)
             Params:

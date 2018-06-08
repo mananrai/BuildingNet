@@ -20,7 +20,7 @@ from pycocotools.cocoeval import COCOeval
 from pycocotools import mask as maskUtils
 
 from mrcnn.evaluate import build_coco_results, evaluate_coco
-from mrcnn.dataset import MappingChallengeDataset
+from mrcnn.dataset import BuildingsDataset
 from mrcnn import visualize
 
 import zipfile
@@ -38,6 +38,8 @@ from mrcnn.config import Config
 from mrcnn import model as modellib, utils
 
 PRETRAINED_MODEL_PATH = os.path.join(ROOT_DIR, "data/" "pretrained_weights.h5")
+PRETRAINED_MODEL_PATH_RESNEXT = os.path.join(ROOT_DIR, "data/" "resnext_50_32x4d.t7")
+
 LOGS_DIRECTORY = os.path.join(ROOT_DIR, "logs")
 MODEL_DIR = os.path.join(ROOT_DIR, "logs")
 IMAGE_DIR = os.path.join(ROOT_DIR, "data", "test", "images")
@@ -89,8 +91,8 @@ def train():
     model = modellib.MaskRCNN(mode="training", config=config, model_dir=LOGS_DIRECTORY)
 
     # Load pretrained weights
-    model_path = PRETRAINED_MODEL_PATH
-    model.load_weights(model_path, by_name=True)
+    # model_path = PRETRAINED_MODEL_PATH_RESNEXT
+    # model.load_weights(model_path, by_name=True)
 
     # Load training dataset
     dataset_train = BuildingsDataset()
@@ -197,7 +199,7 @@ def compilePredictions():
 if __name__ == '__main__':
     # Uncomment in order to train, and then used the previous model's weights
     # for testing by uncommenting line 151
-    # train()
+    train()
 
     # Trains using pre-trained weights
-    test()
+    # test()
