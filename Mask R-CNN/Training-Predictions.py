@@ -84,11 +84,11 @@ class InferenceConfig(Config):
     IMAGE_MAX_DIM = 320
     IMAGE_MIN_DIM = 320
 
-def train():
+def train(backbone="densenet121"):
     config = BuildingsConfig()
     config.display()
 
-    model = modellib.MaskRCNN(mode="training", config=config, model_dir=LOGS_DIRECTORY)
+    model = modellib.MaskRCNN(mode="training", config=config, model_dir=LOGS_DIRECTORY, backbone=backbone)
 
     # Load pretrained weights
     # model_path = PRETRAINED_MODEL_PATH_RESNEXT
@@ -197,6 +197,11 @@ def compilePredictions():
     fp.close()
 
 if __name__ == '__main__':
+    if len(sys.argv[1:]) == 0:
+        backbone = "densenet121"
+    else:
+        backbone = sys.argv[1]
+
     # Uncomment in order to train, and then used the previous model's weights
     # for testing by uncommenting line 151
     train()
