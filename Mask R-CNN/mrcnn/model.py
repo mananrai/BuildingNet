@@ -37,7 +37,6 @@ assert LooseVersion(keras.__version__) >= LooseVersion('2.0.8')
 from mrcnn.backbone import resnext
 from mrcnn.backbone import vgg16
 from mrcnn.backbone import densenet121
-from mrcnn.backbone import unet
 
 
 ############################################################
@@ -187,30 +186,25 @@ def resnet_graph(input_image, architecture, stage5=False, train_bn=True):
     x = BatchNorm(name='bn_conv1')(x, training=train_bn)
     x = KL.Activation('relu')(x)
     C1 = x = KL.MaxPooling2D((3, 3), strides=(2, 2), padding="same")(x)
-    print(C1._keras_shape)
-    print("------------------------")
+
     # Stage 2
     x = conv_block(x, 3, [64, 64, 256], stage=2, block='a', strides=(1, 1), train_bn=train_bn)
     x = identity_block(x, 3, [64, 64, 256], stage=2, block='b', train_bn=train_bn)
     C2 = x = identity_block(x, 3, [64, 64, 256], stage=2, block='c', train_bn=train_bn)
-    print(C2._keras_shape)
-    print("------------------------")
+
     # Stage 3
     x = conv_block(x, 3, [128, 128, 512], stage=3, block='a', train_bn=train_bn)
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='b', train_bn=train_bn)
     x = identity_block(x, 3, [128, 128, 512], stage=3, block='c', train_bn=train_bn)
     C3 = x = identity_block(x, 3, [128, 128, 512], stage=3, block='d', train_bn=train_bn)
-    print(C3._keras_shape)
-    print("------------------------")
+
     # Stage 4
     x = conv_block(x, 3, [256, 256, 1024], stage=4, block='a', train_bn=train_bn)
     block_count = {"resnet50": 5, "resnet101": 22}[architecture]
     for i in range(block_count):
         x = identity_block(x, 3, [256, 256, 1024], stage=4, block=chr(98 + i), train_bn=train_bn)
     C4 = x
-    print(C4._keras_shape)
-    print("------------------------")
-    input("Press Enter to continue...")
+
     # Stage 5
     if stage5:
         x = conv_block(x, 3, [512, 512, 2048], stage=5, block='a', train_bn=train_bn)
@@ -1824,7 +1818,7 @@ class MaskRCNN():
     The actual Keras model is in the keras_model property.
     """
 
-    def __init__(self, mode, config, model_dir, backbone):
+    def __init__(self, mode, config, model_dir, backbone="resnet"):
         """
         mode: Either "training" or "inference"
         config: A Sub-class of the Config class
@@ -1904,8 +1898,6 @@ class MaskRCNN():
             _, C2, C3, C4, C5 = resnext.resnext_graph(input_image, 'resnext101', stage5=True,train_bn=config.TRAIN_BN)
         elif self.backbone == "vgg16":
             _, C2, C3, C4, C5 = vgg16.vgg16_graph(input_image)
-        elif self.backbone == "unet":
-            _, C2, C3, C4, C5 = unet.unet_graph(input_image)
         else:
             _, C2, C3, C4, C5 = densenet121.densenet121_graph(input_image)
 
@@ -2068,7 +2060,8 @@ class MaskRCNN():
         if config.GPU_COUNT > 1:
             from mrcnn.parallel_model import ParallelModel
             model = ParallelModel(model, config.GPU_COUNT)
-        model.summary()
+
+        # model.summary()
         input("Press Enter to continue...")
         return model
 

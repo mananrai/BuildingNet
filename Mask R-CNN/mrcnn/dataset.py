@@ -100,7 +100,7 @@ class BuildingsDataset(utils.Dataset):
             return mask, class_ids
         else:
             # Call super class to return an empty mask
-            return super(MappingChallengeDataset, self).load_mask(image_id)
+            return super(BuildingsDataset, self).load_mask(image_id)
 
 
     def image_reference(self, image_id):

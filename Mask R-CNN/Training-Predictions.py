@@ -128,11 +128,11 @@ def train(backbone="densenet121"):
                 layers='all')
 
 
-def test(examples="one"):
+def test(examples="one", backbone="resnet"):
     config = InferenceConfig()
     config.display()
 
-    inference_model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config)
+    inference_model = modellib.MaskRCNN(mode="inference", model_dir=MODEL_DIR, config=config, backbone=backbone)
 
     model_path = PRETRAINED_MODEL_PATH
     # or if you want to use the latest trained model, you can use :
@@ -143,10 +143,11 @@ def test(examples="one"):
     class_names = ['BG', 'building']  # In our case, we have 1 class for the background, and 1 class for building
 
     file_names = next(os.walk(IMAGE_DIR))[2]
-    print(file_names)
     # Run on single example
     if (examples == "one"):
-        random_image = skimage.io.imread(os.path.join(IMAGE_DIR, random.choice(file_names)))
+        file_name = random.choice(file_names)
+        print(file_name)
+        random_image = skimage.io.imread(os.path.join(IMAGE_DIR, file_name))
         predictions = inference_model.detect([random_image] * config.BATCH_SIZE, verbose=1)  # We are replicating the same image to fill up the batch_size
         p = predictions[0]
         visualize.display_instances(random_image, p['rois'], p['masks'], p['class_ids'], class_names, p['scores'])
@@ -204,7 +205,7 @@ if __name__ == '__main__':
 
     # Uncomment in order to train, and then used the previous model's weights
     # for testing by uncommenting line 151
-    train()
+    train(backbone)
 
     # Trains using pre-trained weights
-    # test()
+    # test(backbone)
