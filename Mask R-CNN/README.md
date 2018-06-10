@@ -34,7 +34,14 @@ The `pretrained_weights.h5` can be downloaded from [https://www.crowdai.org/chal
 
 ### Sources
 
-- This code is heavily inspired by the implementation by Sharada Mohanty for the CrowdAI Mapping Challenge
+- Mask R-CNN (https://arxiv.org/abs/1703.06870)
+- The ResNet model and Mask R-CNN baseline code is heavily inspired by the implementation by Sharada Mohanty for the CrowdAI Mapping Challenge
 (https://www.crowdai.org/challenges/mapping-challenge) with minor changes
 - Adapted from the tensorflow implementation available at https://github.com/matterport/Mask_RCNN
-- Mask R-CNN (https://arxiv.org/abs/1703.06870)
+- DenseNet (https://arxiv.org/pdf/1608.06993.pdf)
+- DenseNet implementations referred to (https://github.com/liuzhuang13/DenseNet; https://github.com/flyyufelix/DenseNet-Keras; https://github.com/titu1994/DenseNet)
+- DenseNets explained (https://towardsdatascience.com/densenet-2810936aeebb)
+- VGG (https://arxiv.org/pdf/1409.1556.pdf)
+- ResNeXt (https://arxiv.org/pdf/1611.05431.pdf)
+- ResNeXt implementations (https://github.com/facebookresearch/ResNeXt; https://github.com/titu1994/Keras-ResNeXt; https://github.com/titu1994/Keras-ResNeXt/blob/master/resnext.py; https://github.com/wenxinxu/ResNeXt-in-tensorflow)
+- ResNeXt explained (https://medium.com/@14prakash/understanding-and-implementing-architectures-of-resnet-and-resnext-for-state-of-the-art-image-cc5d0adf648e)
