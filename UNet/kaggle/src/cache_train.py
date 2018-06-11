@@ -1,9 +1,10 @@
 """
-Script that caches train data for future training
+Original code based from ternaus/kaggle_dstl_submission
+Caches train data for future training
 
-Based on Kaggle Competition
+Modified by Jasmine Hu to 
+Work with RGB instead of 16-band data.
 
-Modified to take 3-channel data
 """
 
 from __future__ import division

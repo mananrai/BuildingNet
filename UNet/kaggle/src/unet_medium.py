@@ -1,8 +1,13 @@
 """
-Original code based on Kaggle competition
+Original code based from ternaus/kaggle_dstl_submission
 
-Modified to take 3-channel input
+Modified by Jasmine Hu to 
+1. Take RGB input
+2. Reduce feature channel widths
+
 """
+
+
 from __future__ import division
 
 import numpy as np
@@ -28,6 +33,8 @@ import os
 import random
 import threading
 
+import tensorflow as tf
+
 from keras.models import model_from_json
 
 img_rows = 112
@@ -39,6 +46,12 @@ smooth = 1e-12
 num_channels = 3
 num_mask_channels = 1
 
+random.seed(0)
+
+from keras.backend.tensorflow_backend import set_session
+config = tf.ConfigProto()
+config.gpu_options.per_process_gpu_memory_fraction = 0.7
+set_session(tf.Session(config=config))
 
 def jaccard_coef(y_true, y_pred):
     intersection = K.sum(y_true * y_pred, axis=[0, -1, -2])
@@ -66,74 +79,74 @@ def jaccard_coef_loss(y_true, y_pred):
 
 def get_unet0():
     inputs = Input((num_channels, img_rows, img_cols))
-    conv1 = Convolution2D(6, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(inputs)
+    conv1 = Convolution2D(12, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(inputs)
     conv1 = BatchNormalization(mode=0, axis=1)(conv1)
     conv1 = keras.layers.advanced_activations.ELU()(conv1)
-    conv1 = Convolution2D(6, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv1)
+    conv1 = Convolution2D(12, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv1)
     conv1 = BatchNormalization(mode=0, axis=1)(conv1)
     conv1 = keras.layers.advanced_activations.ELU()(conv1)
     pool1 = MaxPooling2D(pool_size=(2, 2),dim_ordering='th')(conv1)
 
-    conv2 = Convolution2D(12, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(pool1)
+    conv2 = Convolution2D(24, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(pool1)
     conv2 = BatchNormalization(mode=0, axis=1)(conv2)
     conv2 = keras.layers.advanced_activations.ELU()(conv2)
-    conv2 = Convolution2D(12, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv2)
+    conv2 = Convolution2D(24, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv2)
     conv2 = BatchNormalization(mode=0, axis=1)(conv2)
     conv2 = keras.layers.advanced_activations.ELU()(conv2)
     pool2 = MaxPooling2D(pool_size=(2, 2),dim_ordering='th')(conv2)
 
-    conv3 = Convolution2D(24, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(pool2)
+    conv3 = Convolution2D(48, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(pool2)
     conv3 = BatchNormalization(mode=0, axis=1)(conv3)
     conv3 = keras.layers.advanced_activations.ELU()(conv3)
-    conv3 = Convolution2D(24, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv3)
+    conv3 = Convolution2D(48, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv3)
     conv3 = BatchNormalization(mode=0, axis=1)(conv3)
     conv3 = keras.layers.advanced_activations.ELU()(conv3)
     pool3 = MaxPooling2D(pool_size=(2, 2),dim_ordering='th')(conv3)
 
-    conv4 = Convolution2D(48, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(pool3)
+    conv4 = Convolution2D(96, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(pool3)
     conv4 = BatchNormalization(mode=0, axis=1)(conv4)
     conv4 = keras.layers.advanced_activations.ELU()(conv4)
-    conv4 = Convolution2D(48, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv4)
+    conv4 = Convolution2D(96, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv4)
     conv4 = BatchNormalization(mode=0, axis=1)(conv4)
     conv4 = keras.layers.advanced_activations.ELU()(conv4)
     pool4 = MaxPooling2D(pool_size=(2, 2),dim_ordering='th')(conv4)
 
-    conv5 = Convolution2D(96, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(pool4)
+    conv5 = Convolution2D(192, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(pool4)
     conv5 = BatchNormalization(mode=0, axis=1)(conv5)
     conv5 = keras.layers.advanced_activations.ELU()(conv5)
-    conv5 = Convolution2D(96, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv5)
+    conv5 = Convolution2D(192, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv5)
     conv5 = BatchNormalization(mode=0, axis=1)(conv5)
     conv5 = keras.layers.advanced_activations.ELU()(conv5)
 
     up6 = merge([UpSampling2D(size=(2, 2),dim_ordering='th')(conv5), conv4], mode='concat', concat_axis=1)
-    conv6 = Convolution2D(48, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(up6)
+    conv6 = Convolution2D(96, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(up6)
     conv6 = BatchNormalization(mode=0, axis=1)(conv6)
     conv6 = keras.layers.advanced_activations.ELU()(conv6)
-    conv6 = Convolution2D(48, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv6)
+    conv6 = Convolution2D(96, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv6)
     conv6 = BatchNormalization(mode=0, axis=1)(conv6)
     conv6 = keras.layers.advanced_activations.ELU()(conv6)
 
     up7 = merge([UpSampling2D(size=(2, 2),dim_ordering='th')(conv6), conv3], mode='concat', concat_axis=1)
-    conv7 = Convolution2D(24, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(up7)
+    conv7 = Convolution2D(48, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(up7)
     conv7 = BatchNormalization(mode=0, axis=1)(conv7)
     conv7 = keras.layers.advanced_activations.ELU()(conv7)
-    conv7 = Convolution2D(24, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv7)
+    conv7 = Convolution2D(48, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv7)
     conv7 = BatchNormalization(mode=0, axis=1)(conv7)
     conv7 = keras.layers.advanced_activations.ELU()(conv7)
 
     up8 = merge([UpSampling2D(size=(2, 2),dim_ordering='th')(conv7), conv2], mode='concat', concat_axis=1)
-    conv8 = Convolution2D(12, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(up8)
+    conv8 = Convolution2D(24, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(up8)
     conv8 = BatchNormalization(mode=0, axis=1)(conv8)
     conv8 = keras.layers.advanced_activations.ELU()(conv8)
-    conv8 = Convolution2D(12, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv8)
+    conv8 = Convolution2D(24, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv8)
     conv8 = BatchNormalization(mode=0, axis=1)(conv8)
     conv8 = keras.layers.advanced_activations.ELU()(conv8)
 
     up9 = merge([UpSampling2D(size=(2, 2),dim_ordering='th')(conv8), conv1], mode='concat', concat_axis=1)
-    conv9 = Convolution2D(6, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(up9)
+    conv9 = Convolution2D(12, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(up9)
     conv9 = BatchNormalization(mode=0, axis=1)(conv9)
     conv9 = keras.layers.advanced_activations.ELU()(conv9)
-    conv9 = Convolution2D(6, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv9)
+    conv9 = Convolution2D(12, 3, 3, border_mode='same', init='he_uniform',dim_ordering='th')(conv9)
     crop9 = Cropping2D(cropping=((16, 16), (16, 16)),dim_ordering='th')(conv9)
     conv9 = BatchNormalization(mode=0, axis=1)(crop9)
     conv9 = keras.layers.advanced_activations.ELU()(conv9)
@@ -163,6 +176,10 @@ def form_batch(X, y, batch_size):
         random_height = random.randint(0, X_height - img_rows - 1)
 
         random_image = random.randint(0, X.shape[0] - 1)
+        print(X.shape[0])
+        print(X.shape[1])
+        print(X.shape[2])
+        print(X.shape[3])
 
         y_batch[i] = y[random_image, :, random_height: random_height + img_rows, random_width: random_width + img_cols]
         X_batch[i] = np.array(X[random_image, :, random_height: random_height + img_rows, random_width: random_width + img_cols])
@@ -265,21 +282,22 @@ if __name__ == '__main__':
     train_ids = np.array(f['train_ids'])
 
     batch_size = 128
-    nb_epoch = 1
+    nb_epoch = 4
 
     history = History()
     callbacks = [
         history,
     ]
 
-    suffix = 'buildings_3_'
+    suffix = 'buildings_3_orig'+"{batch}_{epoch}".format(batch=batch_size,epoch=nb_epoch)
+    print("meow "+suffix)
     model.compile(optimizer=Nadam(lr=1e-3), loss=jaccard_coef_loss, metrics=['binary_crossentropy', jaccard_coef_int])
     from tensorflow.python.client import device_lib
     print(device_lib.list_local_devices())
     model.fit_generator(batch_generator(X_train, y_train, batch_size, horizontal_flip=True, vertical_flip=True, swap_axis=True),
                         nb_epoch=nb_epoch,
                         verbose=1,
-                        samples_per_epoch=batch_size * 400,
+                        samples_per_epoch=batch_size * 25,
                         callbacks=callbacks,
                         nb_worker=24
                         )

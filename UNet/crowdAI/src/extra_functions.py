@@ -1,5 +1,10 @@
 """
-Modified to process 3-channel data
+Original code based from ternaus/kaggle_dstl_submission
+Caches train data for future training
+
+Modified by Jasmine Hu to 
+Work with RGB instead of 16-band data.
+
 
 """
 from __future__ import division
@@ -126,7 +131,15 @@ def generate_mask(image_id, height, width, num_mask_channels=10, train=train_wkt
 
 def mask2polygons_layer(mask, epsilon=1.0, min_area=10.0):
     # first, find contours with cv2: it's much faster than shapely
-    contours, hierarchy = cv2.findContours(((mask == 1) * 255).astype(np.uint8), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
+    heh = cv2.findContours(((mask == 1) * 255).astype(np.uint8), cv2.RETR_CCOMP, cv2.CHAIN_APPROX_TC89_KCOS)
+
+    for (i, h) in enumerate(heh):
+        print((i, h))
+
+    contours = heh[1]
+    # // if len(heh[1]) > 0:
+    # hierarchy = heh[1][0]
+    hierarchy = heh[2]
 
     # create approximate contours to have reasonable submission size
     if epsilon != 0:
@@ -134,7 +147,9 @@ def mask2polygons_layer(mask, epsilon=1.0, min_area=10.0):
     else:
         approx_contours = contours
 
-    if not approx_contours:
+    print(approx_contours)
+
+    if len(contours) == 0:
         return MultiPolygon()
 
     all_polygons = find_child_parent(hierarchy, approx_contours, min_area)
@@ -162,6 +177,7 @@ def find_child_parent(hierarchy, approx_contours, min_area):
     # create actual polygons filtering by area (removes artifacts)
     all_polygons = []
     for idx, cnt in enumerate(approx_contours):
+        print(cnt)
         if idx not in child_contours and cv2.contourArea(cnt) >= min_area:
             assert cnt.shape[1] == 1
             holes = [c[:, 0, :] for c in cnt_children.get(idx, []) if cv2.contourArea(c) >= min_area]
@@ -301,8 +317,11 @@ def make_prediction_cropped(model, X_train, initial_size=(572, 572), final_size=
 
     prediction = model.predict(np.array(temp))
     print(prediction.shape)
+    #ev=model.evaluate(np.array(temp))
+    #print(ev.shape)
 
     predicted_mask = np.zeros((num_masks, rounded_height, rounded_width))
+
 
     for j_h, h in enumerate(h_start):
          for j_w, w in enumerate(w_start):
